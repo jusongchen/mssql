@@ -10,7 +10,8 @@ import (
 	"log"
 	"time"
 
-	_ "code.google.com/p/odbc"
+	//_ "code.google.com/p/odbc"
+	_ "github.com/alexbrainman/odbc"
 )
 
 func PingMSSQL(c *Conn, count int64, interval time.Duration) {

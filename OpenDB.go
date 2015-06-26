@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	_ "code.google.com/p/odbc"
+	//_ "code.google.com/p/odbc"
+	_ "github.com/alexbrainman/odbc"
 )
 
 type Conn struct {

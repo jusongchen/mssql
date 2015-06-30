@@ -13,72 +13,64 @@ import (
 	_ "github.com/alexbrainman/odbc"
 )
 
+//Conn is a wrap up of sql.DB and it is safe to be used concurrently by multiple goroutines.
+//field DBName is the sql server session's database context
 type Conn struct {
 	Host   string
 	Login  string
 	Passwd string
 	DBName string
-	db     *sql.DB
+	DB     *sql.DB
 }
 
-func openDB(c *Conn) error {
+//NewCoon creates a connection to MS Sql server
+//when empty DBName passed in, Conn.DBName is set to login'sdefault database name
+func NewConn(Host, DBName, Login, Passwd string) (*Conn, error) {
 
 	params := map[string]string{
 		"driver":   "sql server",
-		"server":   c.Host,
-		"database": c.DBName,
+		"server":   Host,
+		"database": DBName,
 		//"port": 	*msport,
 	}
 
-	if len(c.Login) == 0 {
+	if len(Login) == 0 {
 		params["trusted_connection"] = "yes"
 	} else {
-		params["uid"] = c.Login
-		params["pwd"] = c.Passwd
+		params["uid"] = Login
+		params["pwd"] = Passwd
 	}
 
-	var conn string
+	var connStr string
 	for n, v := range params {
-		conn += n + "=" + v + ";"
+		connStr += n + "=" + v + ";"
 	}
 
-	var err error
-	c.db, err = sql.Open("odbc", conn)
-	return err
-
-}
-
-// //DBName return the connection's database context
-// func (c *Conn) GetDBName() string {
-// 	return c.DBName
-// }
-
-//OpenDB open a MS SQL server database to use.
-//When c.DBName is empty, the login's default database is open and c.DBName is set to login's default database after OpenDB()
-func OpenDB(c *Conn) error {
-
-	if err := openDB(c); err != nil {
-		return err
+	// func Open(driverName, dataSourceName string) (*DB, error)
+	db, err := sql.Open("odbc", connStr)
+	if err != nil {
+		return nil, err
 	}
+
 	//handling default DB
 
 	var curDBName string
-	if err := c.db.QueryRow("select DB_NAME()").Scan(&curDBName); err != nil {
-		return err
+	if err := db.QueryRow("select DB_NAME()").Scan(&curDBName); err != nil {
+		return nil, err
 	}
 
-	//DBName not
-	if c.DBName == "" {
-		c.DBName = curDBName
-		return nil
+	// DBName  specified, and current datbase context is not the same
+	if DBName != "" && !strings.EqualFold(DBName, curDBName) {
+		return nil, fmt.Errorf("SQL server connection's database context is %s, expecting %s.", curDBName, DBName)
 	}
 
-	if !strings.EqualFold(c.DBName, curDBName) {
-		return fmt.Errorf("SQL server connection's database context is %s, expecting %s.", curDBName, c.DBName)
-	}
-
-	return nil
-
+	return &Conn{
+		Host:   Host,
+		DBName: curDBName, //set database context
+		Login:  Login,
+		Passwd: Passwd,
+		DB:     db,
+	}, nil
 }
 
 //There

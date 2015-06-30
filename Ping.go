@@ -14,6 +14,8 @@ import (
 	_ "github.com/alexbrainman/odbc"
 )
 
+//PingMSSQL send sql cmd to SQL server repeatedly
+//use NewConn to create *Conn first.
 func PingMSSQL(c *Conn, count int64, interval time.Duration) {
 	var db *sql.DB
 
@@ -23,11 +25,11 @@ func PingMSSQL(c *Conn, count int64, interval time.Duration) {
 
 	fmt.Printf("%v:start connecting to DB\n", now)
 	var err error
-	err = OpenDB(c)
-	if err != nil {
-		log.Fatal("connect to DB failed:\n", err)
-		return
-	}
+	// err = OpenDB(c)
+	// if err != nil {
+	// 	log.Fatal("connect to DB failed:\n", err)
+	// 	return
+	// }
 	err = db.Ping()
 	if err != nil {
 		log.Fatal("connect to DB failed:\n", err)
